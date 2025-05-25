@@ -4,7 +4,8 @@ import re
 from settings import getLLM
 from data_classes.score import Score
 
-llm = getLLM(model="qwen3:14b", temperature=0)
+model="qwen3:14b"
+temperature=0
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Score)
@@ -42,6 +43,8 @@ scoring_prompt = PromptTemplate.from_template("""
 """)
 
 async def taste_soup(style: str, character: str, setting: str, theme: str, truth: str, result_holder: dict[str, Score | None]):
+    llm = getLLM(model=model, temperature=temperature)
+    
     scoring_chain = scoring_prompt | llm
     output_chunks = []
 

@@ -8,7 +8,8 @@ from settings import getLLM
 import re
 
 # 初始化 Ollama LLM
-llm = getLLM(model="qwen3:14b", temperature=0.9)
+model="qwen3:14b"
+temperature=0.9
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Story)
@@ -62,9 +63,9 @@ default_tropes = [
 
 # Prompt 模板
 prompt_template_new = """
-你是一位擅长创作悬疑故事的悬疑作家。
+你是一位擅长创作海龟汤故事的悬疑作家。
 
-请根据以下以下的故事信息，使用逻辑和你的悬疑写作方法创作一个悬疑故事：
+请根据以下以下的故事信息，使用逻辑和你的悬疑写作方法创作一个海龟汤故事：
 
 风格：{style}
 角色：{character}
@@ -72,12 +73,12 @@ prompt_template_new = """
 主题：{theme}
 
 请生成以下内容：
-【故事】：一篇基于上述信息创作的悬疑故事。必须合乎逻辑并且烧脑。
+【故事】：一篇基于上述信息创作的海龟汤故事。必须合乎逻辑并且烧脑。
 
 要求：
 故事必须符合逻辑。结局必须非常出人意料但在情理之中。**400字以内**
 【故事】必须原创，不得抄袭已知谜题。
-包括以下内容：1. 离奇结尾描述（供玩家推理）；2. 完整故事真相；题目应符合下列套路类型之一：
+请给出完整的海龟汤汤底故事，不需要考虑海龟汤汤面：
 {tropes}
 
 输出格式：
@@ -95,6 +96,8 @@ async def make_story(
         result_holder: dict[str, Score | None], 
         tropes: list[dict[str, Any]] = default_tropes
     ):
+    llm = getLLM(model=model, temperature=temperature)
+
     input = {
         "style": style,
         "character": character,

@@ -1,14 +1,8 @@
 import streamlit as st
-from data_classes.score import Score
-from data_classes.reflection import Reflection
-from data_classes.soup import Soup
-from data_classes.soup import Story
-import re
-from agents.soup_taster_stream import taste_soup
-from agents.soup_maker_stream import make_soup
-from agents.story_maker_stream import make_story
-from agents.soup_analyst_stream import analyze_soup
-from run_streaming import (
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from streaming.run_streaming import (
     run_soup_analyzer_streaming,
     run_soup_maker_streaming,
     run_soup_taster_streaming,
@@ -16,94 +10,94 @@ from run_streaming import (
     run_story_remaker_streaming
 )
 
-# def run_llm_with_retries(func, *args, **kwargs):
-#     for attempt in range(1, 4):
-#         try:
-#             print(f"Attempt {attempt}...")
-#             return func(*args, **kwargs)
-#         except Exception as e:
-#             print(f"Error on attempt {attempt}: {e}")
-#             if attempt == 3:
-#                 raise
+
+import streamlit as st
 
 st.title("🐢 海龟汤")
 
-# State to store whether the form has been submitted
-if "submitted" not in st.session_state:
-    st.session_state.submitted = False
+if st.button('🔁 重新开始'):
+    st.session_state.step = "input"
+    st.session_state.generated = False  # 重置生成标志
+    st.session_state.game_info = {}
+    st.session_state.user_input = {}
+    st.rerun()
 
-# State to store whether the story is ready
-# if "ready" not in st.session_state:
-#     st.session_state.ready = False
-
-# State to store form data
+# 初始化状态
+if "step" not in st.session_state:
+    st.session_state.step = "input"
+if "generated" not in st.session_state:
+    st.session_state.generated = False
 if "user_input" not in st.session_state:
     st.session_state.user_input = {}
-
-# State to store game info
 if "game_info" not in st.session_state:
     st.session_state.game_info = {}
 
 def handle_soup_setting(style, character, setting, theme):
-    st.session_state.submitted = True
     st.session_state.user_input = {
         "style": style, 
         "character": character, 
         "setting": setting, 
         "theme": theme
     }
+    st.session_state.step = "generating"
+    st.session_state.generated = False  # 标记为未生成，准备生成
+    st.rerun()
 
-# def handle_game_start(soup, story):
-#     st.session_state.ready = True
-#     st.session_state.game_info = {
-#         "soup": soup,
-#         "story": story
-#     }
-    # st.rerun()
-
-# print(f"\n\n{st.session_state.submitted, st.session_state.ready}")
-
-if not st.session_state.submitted:
+if st.session_state.step == "input":
     with st.form(key="user_form"):
         st.markdown("### 请输入以下关键词：")
         style = st.text_input("故事风格（悬疑、科幻、超自然等）")
         character = st.text_input("角色类型（医生、村民、职员等）")
         setting = st.text_input("设定背景（末世、医院、皇宫等）")
         theme = st.text_input("故事主题（爱情、背叛、误会等）")
-        submit_button = st.form_submit_button(label="冲")
+        submit_button = st.form_submit_button(label="🧠 开始生成")
 
         if submit_button:
             handle_soup_setting(style, character, setting, theme)
-else:
-    user_input = st.session_state.user_input
-    style, character, setting, theme = user_input.values()
-    with st.expander(label="🧠 海龟汤生成中..."):
-        story = run_story_maker_streaming(style, character, setting, theme)
-        score = run_soup_taster_streaming(style, character, setting, theme, story)
-        reflection = run_soup_analyzer_streaming(style, character, setting, theme, story, score)
-        story = run_story_remaker_streaming(style, character, setting, theme, story, score, reflection)
-        soup = run_soup_maker_streaming(story)
-        # start_game_button = st.button(label="🕹️ 开始游戏")
-        
-        # st.session_state.ready = True
-        # st.rerun()
-        # if start_game_button:
-            # st.session_state.ready = True
-    st.session_state.game_info = {
-        "soup": soup,
-        "story": story
-    }
-            # st.rerun()
-            # handle_game_start(soup, story)
-            # handle_game_start("", story)
-    
+
+elif st.session_state.step == "generating":
+    if not st.session_state.generated:
+        user_input = st.session_state.user_input
+        style, character, setting, theme = user_input.values()
+
+        with st.expander(label="🧠 海龟汤生成中..."):
+            # 这里示意调用生成函数，实际用你的函数替换
+            story = run_story_maker_streaming(style, character, setting, theme)
+            score = run_soup_taster_streaming(style, character, setting, theme, story)
+            reflection = run_soup_analyzer_streaming(style, character, setting, theme, story, score)
+            story = run_story_remaker_streaming(style, character, setting, theme, story, score, reflection)
+            soup = run_soup_maker_streaming(story)
+
+        st.session_state.generated_story = story
+        st.session_state.generated_soup = soup
+        st.session_state.generated = True
+
+    # 生成完毕后显示按钮，点击进入游戏
+    if st.button('🕹️ 开始游戏'):
+        st.session_state.game_info = {
+            "soup": st.session_state.generated_soup,
+            "story": st.session_state.generated_story
+        }
+        st.session_state.step = "playing"
+        st.session_state.generated = False  # 清除生成标志
+        st.rerun()
+
+elif st.session_state.step == "playing":
     with st.chat_message("ai"):
         st.markdown("#### 海龟汤汤面")
-        st.markdown(st.session_state.game_info['soup'])
-    if prompt := st.chat_input("向主持人提问。"):
+        st.markdown(st.session_state.game_info.get('soup', "暂无汤面"))
 
+    if prompt := st.chat_input("向主持人提问。"):
         with st.chat_message("user"):
             st.markdown(prompt)
+
+
+
+# st.button(label="rerun", on_click={
+#     st.rerun()
+# })
+
+
 # else: # ALL GOOD
 #     # user_input = st.session_state.user_input
 

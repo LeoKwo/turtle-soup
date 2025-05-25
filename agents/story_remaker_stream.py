@@ -8,7 +8,8 @@ from settings import getLLM
 import re
 
 # 初始化 Ollama LLM
-llm = getLLM(model="qwen3:14b", temperature=0.9)
+model="qwen3:14b"
+temperature=0.9
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Story)
@@ -99,6 +100,8 @@ async def remake_story(
         result_holder: dict[str, Score | None],
         tropes: list[dict[str, Any]] = default_tropes
     ):
+    llm = getLLM(model=model, temperature=temperature)
+    
     input = {
         "style": style,
         "character": character,

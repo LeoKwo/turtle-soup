@@ -1,18 +1,15 @@
-import json
-import re
 from langchain_core.prompts import PromptTemplate
-from langchain_ollama.llms import OllamaLLM
 from langchain_core.output_parsers import PydanticOutputParser
-from soup_maker import make_soup
-from soup_taster import taste_soup
 from data_classes.answer import Answer
 from data_classes.score import Score
-from generative_soup_agent import generative_loop
+# from generative_soup_agent import generative_loop
 # from settings import LLM_MODEL, LLM
+import re
 from settings import getLLM
 
 # 初始化模型
-llm = getLLM(model="qwen3:14b", temperature=0)
+model="qwen3:14b"
+temperature=0
 
 def get_question():
     question = input("向主持人提问：")
@@ -40,19 +37,39 @@ answer_prompt = PromptTemplate.from_template("""
     }}
 """)
 
-def game_master(
+async def question_master(
         soup: str,
         truth: str,
-        question: str
+        question: str,
+        result_holder: dict[str, Score | None], 
     ):
+    llm = getLLM(model=model, temperature=temperature)
     
-    answer_chain = answer_prompt | llm | outputParser
+    answer_chain = answer_prompt | llm
+    output_chunks = []
 
-    result = answer_chain.invoke({
+    async for event in answer_chain.astream_events({
         "soup": soup,
         "truth": truth,
         "question": question
-    })
+    }):
+        kind = event['event']
+        if kind == "on_chat_model_stream":
+            content = event['data']["chunk"].content
+            # print(content, end="", flush=True)
+            output_chunks.append(content)
+            yield content  # stream each chunk to st.write_stream
+
+    # Once streaming is done, post-process the output
+    full_output = "".join(output_chunks)
+    cleaned_output = re.sub(r"<think>.*?</think>", "", full_output, flags=re.DOTALL)
+    cleaned_output = re.sub(r"<think\s*/>", "", cleaned_output)
+    
+    try:
+        result = outputParser.invoke(cleaned_output)
+    except Exception as e:
+        print("Parsing FAILED:", e)
+        result = None
 
     if isinstance(result, Answer):
         print("---parsed correct---")
@@ -60,10 +77,5 @@ def game_master(
     else:
         print("parsed FAILED")
         print("!!!---PYDANTIC PARSING FAILED---!!!")
-        
-    
-if __name__ == "__main__":
-    soup, truth = generative_loop()
-    while True:
-        question = get_question()
-        game_master(soup, truth, question)
+
+    result_holder["parsed_result"] = result

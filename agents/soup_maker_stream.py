@@ -6,7 +6,8 @@ from settings import getLLM
 import re
 
 # 初始化 Ollama LLM
-llm = getLLM(model="qwen3:14b", temperature=0.9)
+model="qwen3:14b"
+temperature=0.9
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Soup)
@@ -37,6 +38,8 @@ prompt = PromptTemplate.from_template("""
 
 # 主流程
 async def make_soup(truth: str, result_holder: dict[str, Soup | None]):
+    llm = getLLM(model=model, temperature=temperature)
+
     chain = prompt | llm
     output_chunks = []
 

@@ -6,7 +6,8 @@ from settings import getLLM
 import re
 
 # 初始化模型
-llm = getLLM(model="qwen3:14b", temperature=0)
+model="qwen3:14b"
+temperature=0
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Reflection)
@@ -45,6 +46,8 @@ async def analyze_soup(
         score: Score,
         result_holder: dict[str, Reflection | None]
     ):
+
+    llm = getLLM(model=model, temperature=temperature)
     
     reflect_chain = reflect_prompt | llm
     output_chunks = []
