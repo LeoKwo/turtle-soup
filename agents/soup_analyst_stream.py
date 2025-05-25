@@ -6,7 +6,6 @@ from settings import getLLM
 import re
 
 # 初始化模型
-model="qwen3:14b"
 temperature=0
 
 # 输出模版
@@ -47,7 +46,7 @@ async def analyze_soup(
         result_holder: dict[str, Reflection | None]
     ):
 
-    llm = getLLM(model=model, temperature=temperature)
+    llm = getLLM(temperature=temperature)
     
     reflect_chain = reflect_prompt | llm
     output_chunks = []

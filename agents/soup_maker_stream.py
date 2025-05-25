@@ -6,7 +6,6 @@ from settings import getLLM
 import re
 
 # 初始化 Ollama LLM
-model="qwen3:14b"
 temperature=0.9
 
 # 输出模版
@@ -14,31 +13,37 @@ outputParser = PydanticOutputParser(pydantic_object=Soup)
 
 # Prompt 模板
 prompt = PromptTemplate.from_template("""
-你是一位擅长创作海龟汤汤面的悬疑作家。汤面包含【起因】和【结果】
+你是一个专业的海龟汤谜题（汤面）设计师。
 
 请根据以下海龟汤故事创作一个高质量的恐怖悬疑海龟汤汤面：
-
 【海龟汤故事】：
 {truth}
 
-
 请生成以下内容：
-【起因】：一句话内话描述这个故事的开头。不要交代剧透内容，只需描述故事开场的画面。如果有人物出场，请给出人物姓名。如有必要，可以包含地点和设定。
-【结果】：一句话内话总结这个故事的结尾。不要交代剧透内容！！！
+故事谜面：
+1. 开场冲击：用[时间/地点/人物状态]制造反常识场景（如'凌晨三点，男人笑着看妻子切洋葱，突然报警'）
+2. 细节迷雾：植入3个表面矛盾的细节（如'现场有打翻的水杯但无指纹''死者手握未拆封的救生衣'）
+3. 悬念锚点：在结尾用问句锁定核心矛盾（如'为什么目击者听到枪声却说不是凶器？'）
+4. 信息遮蔽：隐藏1个物理常识或社会常识（如光学折射原理、特定职业工作流程）
+                                      
+【技术参数】
+- 语言简洁度：控制在150字内
+- 干扰项密度：每20字埋设1个干扰线索
+- 认知偏差类型：必须包含[基本归因错误]+[错误关联暗示]
 
-要求：
-【起因】与【结果】必须来自提供的海龟汤故事
+【输出示例】
+（经典结构参考）
+午夜医院，护士发现植物人患者死亡时面带微笑，病房窗户大开但积雪平整。为什么尸检显示死因是溺亡？
 
-输出格式：
+【输出格式】
     {{
-        "start": 汤面起因
-        "end": 汤面结果
+        "soup": 根据故事生成的海龟汤汤面
     }}
 """)
 
 # 主流程
 async def make_soup(truth: str, result_holder: dict[str, Soup | None]):
-    llm = getLLM(model=model, temperature=temperature)
+    llm = getLLM(temperature=temperature)
 
     chain = prompt | llm
     output_chunks = []

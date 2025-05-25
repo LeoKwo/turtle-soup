@@ -8,7 +8,6 @@ import re
 from settings import getLLM
 
 # 初始化模型
-model="qwen3:14b"
 temperature=0
 
 def get_question():
@@ -43,7 +42,7 @@ async def question_master(
         question: str,
         result_holder: dict[str, Score | None], 
     ):
-    llm = getLLM(model=model, temperature=temperature)
+    llm = getLLM(temperature=temperature)
     
     answer_chain = answer_prompt | llm
     output_chunks = []

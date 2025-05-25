@@ -4,14 +4,14 @@ import re
 from settings import getLLM
 from data_classes.score import Score
 
-model="qwen3:14b"
+
 temperature=0
 
 # 输出模版
 outputParser = PydanticOutputParser(pydantic_object=Score)
 
 scoring_prompt = PromptTemplate.from_template("""
-    你是一个逻辑严密、擅长评估海龟汤谜题质量的悬疑作家兼职评论员。
+    你是一个非常严格的逻辑严密、擅长评估海龟汤谜题质量的悬疑作家兼职评论员。
 
                                               
     以下是一个海龟汤谜题：
@@ -43,7 +43,7 @@ scoring_prompt = PromptTemplate.from_template("""
 """)
 
 async def taste_soup(style: str, character: str, setting: str, theme: str, truth: str, result_holder: dict[str, Score | None]):
-    llm = getLLM(model=model, temperature=temperature)
+    llm = getLLM(temperature=temperature)
     
     scoring_chain = scoring_prompt | llm
     output_chunks = []

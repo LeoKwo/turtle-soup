@@ -11,6 +11,7 @@ from agents.story_maker_stream import make_story
 from agents.story_remaker_stream import remake_story
 from agents.soup_analyst_stream import analyze_soup
 from agents.game_master import question_master
+import asyncio
 
 def run_soup_analyzer_streaming(style, character, setting, theme, truth, score: Score) -> Reflection | None:
     result_holder: dict[str, Reflection | None] = {}
@@ -115,10 +116,8 @@ def run_story_remaker_streaming(style, character, setting, theme, truth, score: 
 
             st.write_stream(wrapper_gen)
 
-    # 2️⃣ Once streaming is done, clear the placeholder
     streaming_placeholder.empty()
 
-    # 3️⃣ Extract and display structured output
     full_output = full_output_holder["text"]
 
     # Extract <think>...</think>
@@ -129,7 +128,6 @@ def run_story_remaker_streaming(style, character, setting, theme, truth, score: 
     main_output = re.sub(r"<think>.*?</think>", "", full_output, flags=re.DOTALL)
     main_output = re.sub(r"<think\s*/>", "", main_output).strip()
 
-    # 4️⃣ Render final version
     with st.chat_message("ai"):
         if think_text:
             with st.popover("**💭 改写的海龟汤故事**"):
@@ -142,7 +140,6 @@ def run_soup_maker_streaming(truth) -> Soup | None:
     result_holder: dict[str, Soup | None] = {}
     full_output_holder = {"text": ""}
 
-    # 1️⃣ Use placeholder for the streaming message
     streaming_placeholder = st.empty()
 
     with streaming_placeholder.container():
@@ -157,10 +154,8 @@ def run_soup_maker_streaming(truth) -> Soup | None:
 
             st.write_stream(wrapper_gen)
 
-    # 2️⃣ Once streaming is done, clear the placeholder
     streaming_placeholder.empty()
 
-    # 3️⃣ Extract and display structured output
     full_output = full_output_holder["text"]
 
     # Extract <think>...</think>
@@ -228,23 +223,31 @@ def run_soup_taster_streaming(style, character, setting, theme, truth) -> Score 
     return result_holder.get("parsed_result")
 
 
-def run_game_master(story: Story, question: str) -> Answer | None:
+
+
+def run_game_master(story: Story, soup: Soup, question: str) -> Answer | None:
     result_holder: dict[str, Story | None] = {}
     full_output_holder = {"text": ""}
 
     streaming_placeholder = st.empty()
 
     with streaming_placeholder.container():
-        with st.chat_message("ai"):
-            async def wrapper_gen():
-                async for chunk in question_master(
-                    story, question,
-                    result_holder=result_holder
-                ):
-                    full_output_holder["text"] += chunk
-                    yield chunk
+        # st.write("思考中 ")
+        # with st.chat_message("ai"):
+        async def wrapper_gen():
 
-            st.write_stream(wrapper_gen)
+            async for chunk in question_master(
+                soup, story, question,
+                result_holder=result_holder
+            ):
+                print(chunk, end="", flush=True)
+                # yield ". "
+
+        
+        # st.write_stream(wrapper_gen)
+
+        with st.spinner(text="思考中"):
+            asyncio.run(wrapper_gen())
 
     streaming_placeholder.empty()
 
@@ -256,10 +259,10 @@ def run_game_master(story: Story, question: str) -> Answer | None:
     main_output = re.sub(r"<think>.*?</think>", "", full_output, flags=re.DOTALL)
     main_output = re.sub(r"<think\s*/>", "", main_output).strip()
 
-    with st.chat_message("ai"):
+    # with st.chat_message("ai"):
         # if think_text:
         #     with st.popover("**💭 改写的海龟汤故事**"):
         #         st.markdown(think_text)
-        st.markdown(main_output)
+        # st.markdown(main_output)
 
     return result_holder.get("parsed_result")
