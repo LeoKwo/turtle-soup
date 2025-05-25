@@ -18,6 +18,6 @@ Agentic LLM Turtle Soup Game. Dynamically generate turtle soup stories.
 
 ### System Requirements
 - A beefy graphics card
-    - I am using a RX 7900 XT with 20 GB VRAM. It can barely hold Qwen3:30b.
+    - I am using an AMD RX 7900 XT with 20 GB VRAM. It can barely hold Qwen3:30b.
     - You can try models with lower quant but the quality drops significantly.
 - You may choose to go with online models for the best performance
