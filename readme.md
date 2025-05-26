@@ -13,7 +13,10 @@ Read more here: [https://en.wikipedia.org/wiki/Situation_puzzle](https://en.wiki
 ### Features
 1. Support for reasoning models such as Qwen3 and DeepSeek-R1
 2. Support for streaming LLM output to Streamlit UI
-3. Implemented a chain of agents cycle with story generation, critics and re-gen
+
+### To-dos
+1. Game master needs the ability to know if the user has reached the final truth
+2. Implement a save and load feature for generated stories
 
 ### Installation
 1. ```ollama pull qwen3:30b``` ```ollama pull qwen3:14b```. You can change to whatever LLM that fits in your VRAM

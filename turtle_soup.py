@@ -127,6 +127,15 @@ elif st.session_state.step == "generating":
         st.rerun()
 
 elif st.session_state.step == "playing":
+    with st.expander(label="🎵 BGM"):
+        st.write("**Caves of Dawn**")
+        st.audio(data="./music/caves-of-dawn.mp3", format="audio/mp3", loop=True, autoplay=False)
+        st.write("**Piano Sonata No.14**")
+        st.audio(data="./music/piano-sonata-no-14.mp3", format="audio/mp3", loop=True, autoplay=False)
+        st.write("**Dark Fog**")
+        st.audio(data="./music/dark-fog.mp3", format="audio/mp3", loop=True, autoplay=False)
+        st.write("**It is coming**")
+        st.audio(data="./music/it-is-coming.mp3", format="audio/mp3", loop=True, autoplay=False)
     # render chat interface
     with st.container():
         st.markdown(body=f"#### 汤面\n{st.session_state.game_info.get('soup', '暂无汤面')}")
