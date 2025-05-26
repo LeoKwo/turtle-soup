@@ -10,6 +10,7 @@ Agentic LLM Turtle Soup Game. Dynamically generate turtle soup stories.
 ### Features
 1. Support for reasoning models such as Qwen3 and DeepSeek-R1
 2. Support for streaming LLM output to Streamlit UI
+3. Implemented a chain of agents cycle with story generation, critics and re-gen
 
 ### Installation
 1. ```ollama pull qwen3:30b``` ```ollama pull qwen3:14b```. You can change to whatever LLM that fits in your VRAM
