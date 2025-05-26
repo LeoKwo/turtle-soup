@@ -1,7 +1,7 @@
 # Turtle Soup Game
 Agentic LLM Turtle Soup Game. Dynamically generate turtle soup stories.
 
-### dafuq is a turtle soup game?
+### What is a turtle soup game?
 Read more here: [https://en.wikipedia.org/wiki/Situation_puzzle](https://en.wikipedia.org/wiki/Situation_puzzle)
 
 ### Requirements
