@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings import getEMBED
 
-def search(query: str):
+def search_soup(query: str):
     embedding = getEMBED()
     vectorstore = FAISS.load_local("soup_index", embedding, allow_dangerous_deserialization=True)
     results = vectorstore.similarity_search(query, k=3)
@@ -17,4 +17,4 @@ def search(query: str):
     return results
 
 if __name__ == "__main__":
-    search("夜晚有人敲门但没人出现")
+    search_soup("夜晚有人敲门但没人出现")

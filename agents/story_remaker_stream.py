@@ -6,6 +6,7 @@ from data_classes.score import Score
 from typing import Any
 from settings import getLLM
 import re
+from few_shot.retriever import search_soup
 
 # 初始化 Ollama LLM
 temperature=0.9
@@ -16,88 +17,84 @@ outputParser = PydanticOutputParser(pydantic_object=Story)
 # 套路
 default_tropes = [
     {
-        "id": "reversal",
-        "name": "反转型",
-        "description": "结局出人意料，往往表面看似合理甚至幸福，实则隐藏着悲剧或讽刺。",
-        "keywords": ["出人意料", "真相反转", "讽刺", "悲剧"]
+        "id": "identity_reversal",
+        "name": "身份反转型",
+        "description": "角色真实身份与表象完全相反，通过身份错位制造核心诡计。",
+        "keywords": ["假死者", "活人伪装", "物种伪装", "双胞胎"]
     },
     {
-        "id": "misunderstanding",
-        "name": "信息差型",
-        "description": "主角因为信息缺失或误解而做出看似不合理的行为，玩家需还原完整背景。",
-        "keywords": ["误解", "隐藏信息", "误会", "信息不对称"]
+        "id": "death_puzzle",
+        "name": "死亡谜局型",
+        "description": "通过非常规死亡方式设计谜题，包含自杀伪装/意外致死/集体死亡等模式。",
+        "keywords": ["延时装置", "日常物品致死", "气体泄漏", "心理暗示"]
     },
     {
-        "id": "death",
-        "name": "死亡型",
-        "description": "涉及离奇的死亡、自杀或谋杀事件，真相通常令人震惊或难以置信。",
-        "keywords": ["自杀", "他杀", "谋杀", "事故", "尸体"]
+        "id": "info_trick",
+        "name": "信息诡计型",
+        "description": "利用叙述性诡计或常识盲区制造认知偏差，包含性别/物种/数量误导。",
+        "keywords": ["叙述性诡计", "物理原理", "生物特性", "化学现象"]
     },
     {
-        "id": "fragment",
-        "name": "片段型",
-        "description": "只呈现故事的某个片段或结尾，引导玩家还原时间线和完整事件。",
-        "keywords": ["结局先行", "镜头切换", "时间跳跃"]
+        "id": "time_space",
+        "name": "时空操作型",
+        "description": "通过时间循环、空间错位或维度折叠构建非常规事件逻辑。",
+        "keywords": ["记忆错位", "镜像密室", "季节伪装", "微观空间"]
     },
     {
-        "id": "identity",
-        "name": "身份错位型",
-        "description": "故事中角色身份存在误导或反转，真相依赖对身份认知的纠正。",
-        "keywords": ["角色反转", "冒充", "替身", "盲点"]
+        "id": "psychology",
+        "name": "心理暗示型",
+        "description": "利用群体认知偏差和红鲱鱼陷阱引导错误推理方向。",
+        "keywords": ["从众效应", "语言双关", "刻板印象", "无效线索"]
     },
     {
-        "id": "unreality",
-        "name": "幻想/非现实型",
-        "description": "事件发生在梦境、影视、幻想或精神异常场景中，与现实脱节。",
-        "keywords": ["幻想", "梦境", "虚拟现实", "精神病", "非真实"]
-    },
-    {
-        "id": "moral",
-        "name": "道德抉择型",
-        "description": "主角面临伦理困境或两难选择，事件涉及牺牲、救赎或价值观冲突。",
-        "keywords": ["伦理", "牺牲", "道德", "人性", "灰色地带"]
+        "id": "special_rules",
+        "name": "特殊设定型",
+        "description": "声明超自然规则后在其框架内设计符合逻辑的非常规解答。",
+        "keywords": ["拟人法则", "能量守恒", "规则嵌套", "限制条件"]
     }
 ]
 
 prompt_template_remake = """
-    你是一位擅长编辑海龟汤故事的推理悬疑作家，请按照要求修改以下的海龟汤汤底：
+你是一个编辑海龟汤故事的推理悬疑作家，请按照要求修改以下的海龟汤汤底：
 
-    1. 模式选择（二选一）：
-        - 现实模式：基于[科学原理/职业知识/社会常识]构建核心诡计
-        - 幻想模式：声明[超自然法则]+[现实映射规则]双系统
+【基本要素】
+风格：{style}
+角色：{character}
+场景：{setting}
+主题：{theme}
+上一版故事: {truth}
+故事评分: {score}
+改进建议: {reflection}
 
-    2. 基础元件：
-        - 必须包含1个「常识折叠点」（如将次声波共振伪装成鬼哭）
-        - 必须设计2个「悖论线索」（用※标记红鲱鱼）
+【核心要求】
+1. 根据建议和评分编辑上一版故事。必须包含一个令人震惊的反转结局
+2. 包含2个看似矛盾的线索（用※标记）
+3. 解答必须符合以下条件之一：
+   - 现实模式：基于科学原理/专业知识/社会常识
+   - 幻想模式：有明确声明的超自然规则
 
-    3. 逻辑验证：
-        - 现实模式：通过[奥卡姆剃刀测试]（最简单解释覆盖所有线索）
-        - 幻想模式：通过[法则兼容性测试]（不违反自设世界观）
+【创作步骤】
+1. 先确定核心诡计
+2. 设计至少两个表面矛盾的线索
+3. 构建符合逻辑的解答路径
 
-    4. 从以下套路中选择一个：
-    {tropes}
+【禁止事项】
+- 不得出现未声明的超自然元素（幻想模式除外）
+- 不得使用梦境/精神病等偷懒解释
 
-    5. 禁止项：
-        - 现实模式不得出现超自然解释
-        - 幻想模式不得有未声明的隐藏法则
+【参考示例】
+可以参考故事情节或者提取其中的套路
+{few_shot_examples}
 
-    在满足以上条件时，按照以下用户自定义的参数和评论修改海龟汤故事：
-    【用户自定义海龟汤故事参数】
-    风格: {style}
-    角色: {character}
-    场景: {setting}
-    主题: {theme}
-    上一版故事: {truth}
-    故事评分: {score}
-    改进建议: {reflection}
+作为参考，可以从以下套路中选择一个：
+{tropes}
 
-    请给出完整的海龟汤汤底故事 **400字以内**，不需要考虑海龟汤汤面：
-    
+必须按照以下JSON格式输出完整的海龟汤汤底故事 **400字以内**：
 
-    输出格式：
-        {{
-            "story": 海龟汤汤底故事
-        }}
+输出格式：
+    {{
+        "story": 海龟汤汤底故事
+    }}
 """
 
 # 后续流程
@@ -109,11 +106,12 @@ async def remake_story(
         truth: str, 
         score: Score, 
         reflection: Reflection, 
+        few_shot_examples: str,
         result_holder: dict[str, Score | None],
         tropes: list[dict[str, Any]] = default_tropes
     ):
     llm = getLLM(temperature=temperature)
-    
+
     input = {
         "style": style,
         "character": character,
@@ -122,6 +120,7 @@ async def remake_story(
         "tropes": tropes,
         "truth": truth,
         "score": score,
+        "few_shot_examples": few_shot_examples,
         "reflection": reflection
     }
     prompt = PromptTemplate(

@@ -8,19 +8,23 @@ from streaming.run_streaming import (
     run_game_master
 )
 import streamlit as st
+from few_shot.retriever import search_soup
+from settings import random_story_elements
 
 st.title("🐢 海龟汤")
 
 # SETTINGS
 USE_LLM = True
 
-if st.button('🔁 重新开始'):
+if st.button('🔙 重新开始'):
     st.session_state.step = "input"
     st.session_state.generated = False  # 重置生成标志
     st.session_state.game_info = {}
     st.session_state.user_input = {}
     st.session_state["messages"] = []
     st.rerun()
+
+
 
 # 初始化状态
 if "step" not in st.session_state:
@@ -45,10 +49,16 @@ def handle_soup_setting(style, character, setting, theme):
     st.session_state.step = "generating"
     st.session_state.generated = False  # 标记为未生成，准备生成
     st.rerun()
+    
 
 if st.session_state.step == "input":
+    if st.button('🔀 系统选择随机主题'):
+        style, character, setting, theme = random_story_elements()
+        st.success(f"系统选择了：\n{style, character, setting, theme}")
+        handle_soup_setting(style, character, setting, theme)
     with st.form(key="user_form"):
         st.markdown("### 请输入以下关键词：")
+        
         style = st.text_input("故事风格（悬疑、科幻、超自然等）")
         character = st.text_input("角色类型（医生、村民、职员等）")
         setting = st.text_input("设定背景（末世、医院、皇宫等）")
@@ -57,19 +67,43 @@ if st.session_state.step == "input":
 
         if submit_button:
             handle_soup_setting(style, character, setting, theme)
+        
 
 elif st.session_state.step == "generating":
     if not st.session_state.generated:
         user_input = st.session_state.user_input
         style, character, setting, theme = user_input.values()
 
+        few_shot_examples = search_soup(query=f"{(style, character, setting, theme)}")
+
         if USE_LLM:
             with st.expander(label="🧠 海龟汤生成中..."):
-                story = run_story_maker_streaming(style, character, setting, theme)
-                score = run_soup_taster_streaming(style, character, setting, theme, story)
-                reflection = run_soup_analyzer_streaming(style, character, setting, theme, story, score)
-                story = run_story_remaker_streaming(style, character, setting, theme, story, score, reflection)
+                # # step 1: 生成汤底
+                # story = run_story_maker_streaming(style, character, setting, theme)
+                # # step 2: 品尝汤底
+                # score = run_soup_taster_streaming(style, character, setting, theme, story)
+                # # step 3: 计划改进
+                # reflection = run_soup_analyzer_streaming(style, character, setting, theme, story, score)
+                # # step 4：重做汤底
+                # story = run_story_remaker_streaming(style, character, setting, theme, story, score, reflection, few_shot_examples)
+                # # step 5: 生成汤面
+                # soup = run_soup_maker_streaming(story)
+
+                # ------------
+
+                # step 1: 生成汤底
+                story = run_story_maker_streaming(style, character, setting, theme, few_shot_examples)
+                # step 5: 生成汤面
                 soup = run_soup_maker_streaming(story)
+                # step 2: 品尝汤底
+                score = run_soup_taster_streaming(style, character, setting, theme, f"汤面：{soup}\n汤底: {story}")
+                # step 3: 计划改进
+                reflection = run_soup_analyzer_streaming(style, character, setting, theme, f"汤面：{soup}\n汤底: {story}", score)
+                # step 4：重做汤底
+                story = run_story_remaker_streaming(style, character, setting, theme, f"汤面：{soup}\n汤底: {story}", score, reflection, few_shot_examples)
+                # step 5: 生成汤面
+                soup = run_soup_maker_streaming(story)
+                
             st.session_state.generated_story = story
             st.session_state.generated_soup = soup
             st.session_state.generated = True

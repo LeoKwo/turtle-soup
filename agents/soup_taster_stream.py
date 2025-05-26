@@ -12,8 +12,7 @@ outputParser = PydanticOutputParser(pydantic_object=Score)
 
 scoring_prompt = PromptTemplate.from_template("""
     你是一个非常严格的逻辑严密、擅长评估海龟汤谜题质量的悬疑作家兼职评论员。
-
-                                              
+                    
     以下是一个海龟汤谜题：
                                               
     【用户输入】：
@@ -25,8 +24,7 @@ scoring_prompt = PromptTemplate.from_template("""
     【海龟汤故事】：
     {truth}
 
-    【注意】：海龟汤故事仅仅是汤底的故事真相，并不包括汤面。
-    请你从以下四个维度对这个谜题打分（0~10）并进行简短评论：
+    请你从以下四个维度对这个谜题打分（0~10）并进行简短评论，请你尽可能严格把关：
 
     1. 迷惑性（是否能引发玩家好奇）1-10：
     2. 逻辑性（故事是否自洽）1-10：

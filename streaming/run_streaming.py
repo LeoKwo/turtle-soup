@@ -55,7 +55,7 @@ def run_soup_analyzer_streaming(style, character, setting, theme, truth, score: 
         st.markdown(main_output)
     return result_holder.get("parsed_result")
 
-def run_story_maker_streaming(style, character, setting, theme) -> Story | None:
+def run_story_maker_streaming(style, character, setting, theme, few_shot_examples) -> Story | None:
     result_holder: dict[str, Story | None] = {}
     full_output_holder = {"text": ""}
 
@@ -66,7 +66,7 @@ def run_story_maker_streaming(style, character, setting, theme) -> Story | None:
         with st.chat_message("ai"):
             async def wrapper_gen():
                 async for chunk in make_story(
-                    style, character, setting, theme,
+                    style, character, setting, theme, few_shot_examples,
                     result_holder=result_holder
                 ):
                     full_output_holder["text"] += chunk
@@ -97,7 +97,7 @@ def run_story_maker_streaming(style, character, setting, theme) -> Story | None:
 
     return result_holder.get("parsed_result")
 
-def run_story_remaker_streaming(style, character, setting, theme, truth, score: Score, reflection: Reflection) -> Story | None:
+def run_story_remaker_streaming(style, character, setting, theme, truth, score: Score, reflection: Reflection, few_shot_examples) -> Story | None:
     result_holder: dict[str, Story | None] = {}
     full_output_holder = {"text": ""}
 
@@ -108,7 +108,7 @@ def run_story_remaker_streaming(style, character, setting, theme, truth, score: 
         with st.chat_message("ai"):
             async def wrapper_gen():
                 async for chunk in remake_story(
-                    style, character, setting, theme, truth, score, reflection,
+                    style, character, setting, theme, truth, score, reflection, few_shot_examples,
                     result_holder=result_holder
                 ):
                     full_output_holder["text"] += chunk
