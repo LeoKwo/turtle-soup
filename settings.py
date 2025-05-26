@@ -2,16 +2,24 @@ from langchain_ollama.chat_models import ChatOllama
 from dotenv import load_dotenv
 from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_deepseek.chat_models import ChatDeepSeek
+from langchain_community.chat_models import ChatZhipuAI
 import os
 import random
 load_dotenv()
 
-LLM_MODEL = "qwen3:30b"
+# LLM_MODEL = "qwq:latest" # 32b (20G)
+LLM_MODEL = "qwen3:30b" # 19G
 def getLLM(model=LLM_MODEL, temperature=0.9):
     return ChatOllama(model=model, temperature=temperature)
+
 # LLM_MODEL = "deepseek-reasoner"
 # def getLLM(model=LLM_MODEL, temperature=0.9):
 #     return ChatDeepSeek(model=model, temperature=temperature, streaming=True)
+
+# LLM_MODEL = "GLM-Z1-Air"
+# def getLLM(model=LLM_MODEL, temperature=0.9):
+#     return ChatZhipuAI(model=model, temperature=temperature, streaming=True)
+
 
 EMBED_MODEL = "herald/dmeta-embedding-zh"
 def getEMBED(model=EMBED_MODEL):
