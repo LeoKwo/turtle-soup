@@ -28,3 +28,6 @@ Read more here: [https://en.wikipedia.org/wiki/Situation_puzzle](https://en.wiki
     - I am using an AMD RX 7900 XT with 20 GB VRAM. It can barely hold Qwen3:30b.
     - You can try models with lower quant but the quality drops significantly.
 - You may choose to go with online models for the best performance
+  
+### Issue
+There really is **NO LLM** good enough to generate interesting lateral thinking puzzles.
